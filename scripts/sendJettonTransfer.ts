@@ -6,7 +6,9 @@ import { HighloadQueryId } from '../wrappers/HighloadQueryId';
 import { DEFAULT_TIMEOUT, SUBWALLET_ID, maxShift } from '../tests/imports/const';
 
 import { mnemonicToWalletKey } from 'ton-crypto';
-import { promptAddress } from '../utils/ui';
+import { promptAddress, promptAmount } from '../utils/ui';
+import { JettonWallet } from '../wrappers/JettonWallet';
+import { JettonMinter } from '../wrappers/JettonMinter';
 
 export async function run(provider: NetworkProvider) {
     // Load mnemonic from .env file
@@ -18,18 +20,34 @@ export async function run(provider: NetworkProvider) {
 
     const rndShift = getRandomInt(0, maxShift);
     const rndBitNum = 1022;
+    const queryId = HighloadQueryId.fromShiftAndBitNumber(BigInt(rndShift), BigInt(rndBitNum));
 
     // You can pack your own messages here
-    const testBody = beginCell().storeUint(0, 32).storeStringTail('Test highload-wallet-v3').endCell();
-    const queryId = HighloadQueryId.fromShiftAndBitNumber(BigInt(rndShift), BigInt(rndBitNum));
+    const jettonMasterAddress = await promptAddress('Enter your jetton-master address: ', provider.ui());
+    const jettonMaster = provider.open(JettonMinter.createFromAddress(jettonMasterAddress));
+    const hwJettonWalletAddress = await jettonMaster.getWalletAddress(highloadWalletV3Address);
+    const hwJettonWallet = provider.open(JettonWallet.createFromAddress(hwJettonWalletAddress));
+    const decimals = 9;
+    const hwBalance = await hwJettonWallet.getJettonBalance();
+    const to = await promptAddress('Enter your destination address: ', provider.ui());
+    const responseAddress = to;
+    const jettonAmount = await promptAmount(`Enter the amount of MEME to sell (max: ${Number(hwBalance) / 10**decimals}): `, decimals, provider.ui()); // prettier-ignore
+    const transferBody = JettonWallet.transferMessage(
+        jettonAmount,
+        to,
+        responseAddress,
+        null,
+        0n,
+        beginCell().storeUint(0, 32).endCell(),
+    );
 
     await highloadWalletV3.sendExternalMessage(keyPair.secretKey, {
         query_id: queryId,
         message: internal_relaxed({
-            to: Address.parse('0QDrRQlKRo5J10a-nUb8UQ7f3ueVYBQVZV9X8uAjmS7gH1Gy'),
+            to: hwJettonWalletAddress,
             bounce: false,
-            value: toNano('0.05'),
-            body: testBody,
+            value: toNano('0.1'),
+            body: transferBody,
         }),
         createdAt: Math.floor(Date.now() / 1000) - 10,
         mode: SendMode.PAY_GAS_SEPARATELY,
