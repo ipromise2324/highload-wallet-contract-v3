@@ -6,20 +6,21 @@ import { HighloadQueryId } from '../wrappers/HighloadQueryId';
 import { DEFAULT_TIMEOUT, SUBWALLET_ID, maxShift } from '../tests/imports/const';
 
 import { mnemonicToWalletKey } from 'ton-crypto';
+import { promptAddress } from '../utils/ui';
 
 export async function run(provider: NetworkProvider) {
-    // load mnemonic from .env file
+    // Load mnemonic from .env file
     const mnemonic = process.env.WALLET_MNEMONIC!.split(' ');
     const keypair = await mnemonicToWalletKey(mnemonic);
 
-    const highloadWalletV3 = provider.open(
-        HighloadWalletV3.createFromAddress(Address.parse('0QCg05dcxHO09Ydrw-yTuexzMUa8iJmYAO4eWmyqfgVnDZ_0')),
-    );
+    const highloadWalletV3Address = await promptAddress('Enter your highload-wallet-v3 address: ', provider.ui());
+    const highloadWalletV3 = provider.open(HighloadWalletV3.createFromAddress(highloadWalletV3Address));
 
     const rndShift = getRandomInt(0, maxShift);
     const rndBitNum = 1022;
 
-    const testBody = beginCell().storeUint(getRandomInt(0, 1000000), 32).endCell();
+    // You can pack your own messages here
+    const testBody = beginCell().storeUint(0, 32).storeStringTail('Test highload-wallet-v3').endCell();
     const queryId = HighloadQueryId.fromShiftAndBitNumber(BigInt(rndShift), BigInt(rndBitNum));
 
     await highloadWalletV3.sendExternalMessage(keypair.secretKey, {

@@ -9,7 +9,6 @@ dotenv.config();
 
 export async function run(provider: NetworkProvider) {
     const mnemonic = process.env.WALLET_MNEMONIC!.split(' ');
-
     const keyPair = await mnemonicToWalletKey(mnemonic);
 
     const highloadWalletV3 = provider.open(
@@ -23,7 +22,11 @@ export async function run(provider: NetworkProvider) {
         ),
     );
 
-    await highloadWalletV3.sendDeploy(provider.sender(), toNano('0.1'));
-
+    await highloadWalletV3.sendDeploy(provider.sender(), toNano('0.05'));
     await provider.waitForDeploy(highloadWalletV3.address, 10, 5);
+
+    const chalk = require('chalk');
+    console.log('\n====================================================================================');
+    console.log(chalk.red('Your HighloadWalletV3 Address: '), chalk.yellow(highloadWalletV3.address));
+    console.log('====================================================================================\n');
 }
