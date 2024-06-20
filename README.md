@@ -35,6 +35,9 @@ npm run test
     npm run start deployHighloadWallet
     ```
 5. After deploying the highload-wallet-v3, **record the address**. You will need it for running the send message scripts.
+   
+    <img width="595" alt="image" src="https://github.com/ipromise2324/highload-wallet-contract-v3/assets/87699256/ae33e716-8d3f-40ea-bd11-d1c8b8750c8e">
+
 
 ## Send Internal Message
 
