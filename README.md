@@ -39,7 +39,7 @@ npm run test
     <img width="595" alt="image" src="https://github.com/ipromise2324/highload-wallet-contract-v3/assets/87699256/ae33e716-8d3f-40ea-bd11-d1c8b8750c8e">
 
 
-## Send Internal Message
+## Send General Message
 
 To send an internal message, you can adjust the content of `sendTransfer.ts`. The current code is set up to perform a simple TON transfer.
 
