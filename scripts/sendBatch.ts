@@ -16,39 +16,45 @@ export async function run(provider: NetworkProvider) {
     const highloadWalletV3Address = await promptAddress('Enter your highload-wallet-v3 address: ', provider.ui());
     const highloadWalletV3 = provider.open(HighloadWalletV3.createFromAddress(highloadWalletV3Address));
 
-    const curQuery = new HighloadQueryId();
-    let outMsgs: OutActionSendMsg[] = new Array(254);
+    const rndShift = getRandomInt(0, maxShift);
+    const rndBitNum = getRandomInt(0, 1022);
+    const queryId = HighloadQueryId.fromShiftAndBitNumber(BigInt(rndShift), BigInt(rndBitNum));
 
-    // 0QCg05dcxHO09Ydrw-yTuexzMUa8iJmYAO4eWmyqfgVnDZ_0
+    const msgCount = 2;
+    let outMsgs: OutActionSendMsg[] = new Array(msgCount);
+
     // You can pack your own messages here
     const testBody = beginCell().storeUint(0, 32).storeStringTail('Test highload-wallet-v3').endCell();
-    for (let i = 0; i < 1; i++) {
+    for (let i = 0; i < msgCount; i++) {
         outMsgs[i] = {
             type: 'sendMsg',
             mode: SendMode.NONE,
             outMsg: internal_relaxed({
-                to: Address.parse('0QAHg-2Oy8Mc2BfENEaBcoDNXvHCu7mc28KkPIks8ZVqwmzg'),
+                to: Address.parse('UQChc1fIWCxkvP58259wiX9qLjCn0c2ZwCO9cVmL3EkZi0MN'),
                 value: toNano('0.05'),
                 body: testBody,
             }),
         };
     }
 
-    for (let i = 1; i < 100; i++) {
-        console.log(i);
+    let tryCount = 0;
+    console.log('The message transmission will take some time. Please be patient and wait.');
+    console.log('Sending batch...');
+    while (true) {
+        tryCount++;
         try {
             await highloadWalletV3.sendBatch(
                 keyPair.secretKey,
                 outMsgs,
                 SUBWALLET_ID,
-                curQuery,
+                queryId,
                 DEFAULT_TIMEOUT,
                 Math.floor(Date.now() / 1000) - 10,
             );
-            console.log('Success');
+            console.log('Success at try:', tryCount);
             break;
         } catch (e) {
-            console.log(e);
+            // console.log(e);
             // Sleep for 1 second
             // await new Promise((resolve) => setTimeout(resolve, 300));
         }
